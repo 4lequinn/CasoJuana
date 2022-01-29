@@ -14,3 +14,16 @@ from django.contrib.auth.decorators import login_required, permission_required #
 
 def index(request):
     return render(request,'core/index.html');
+
+
+def registroCliente(request):
+    return render(request, 'core/login.html');
+
+def arrienda(request):
+    return render(request, 'core/arrienda.html');
+
+def cart(request):
+    return render(request, 'core/cart.html');
+
+def repara(request):
+    return render(request, 'core/repara.html');
