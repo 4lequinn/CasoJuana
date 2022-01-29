@@ -110,11 +110,17 @@
                     <div class="col-md-8 clearfix">
                         <div class="shop-menu clearfix pull-right">
                             <ul class="nav navbar-nav">
-                                <li><a href=""><i class="fa fa-user"></i> Cuenta</a></li>
-                                <li><a href=""><i class="fa fa-star"></i> Lista De Deseos</a></li>
-                                <li><a href="#"><i class="fa fa-crosshairs"></i> Verificar</a></li>
-                                <li><a href={% url 'CART' %}><i class="fa fa-shopping-cart"></i> Carrito De compras</a></li>
-                                <li><a href={% url 'LOGIN' %}><i class="fa fa-lock"></i> Login</a></li>
+                                {% if user.is_authenticated %}
+                                    <li><a href=""><i class="fa fa-user"></i> Cuenta de {{user.first_name}}</a></li>
+                                    <li><a href={% url 'CART' %}><i class="fa fa-shopping-cart"></i> Carrito De compras</a></li>
+                                {% endif %}
+
+                                {% if user.is_authenticated %}
+                                    <li><a href={% url 'LOGOUT' %}><i class="fa fa-lock"></i>Cerrar sesión</a></li>
+                                {% else %}
+                                    <li><a href={% url 'LOGIN' %}><i class="fa fa-lock"></i> Login</a></li>
+                                {% endif %}
+                                
                             </ul>
                         </div>
                     </div>
@@ -140,6 +146,8 @@
                         <div class="mainmenu pull-left">
                             <ul class="nav navbar-nav collapse navbar-collapse">
                                 <li><a href={% url 'INDEX' %}>Home</a></li>
+
+                                {% if user.is_authenticated %}
                                 <li class="dropdown"><a href="#">Compras<i class="fa fa-angle-down"></i></a>
                                     <ul role="menu" class="sub-menu">
                                         <li><a href="shop.html">Productos</a></li>
@@ -157,7 +165,7 @@
                                 <li class="dropdown"><a href="#">Arrienda<i class="fa fa-angle-down"></i></a>
                                     <ul role="menu" class="sub-menu">
                                         <li><a href={% url 'ARRIENDA' %}>Bicicletas</a></li>
-
+                                {% endif %}
                         </div>
                     </div>
                     <div class="col-sm-3">

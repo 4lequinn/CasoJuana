@@ -9,9 +9,10 @@
 				<div class="col-sm-4 col-sm-offset-1">
 					<div class="login-form"><!--login form-->
 						<h2>Ingrese a su cuenta</h2>
-						<form action="#">
-							<input type="text" placeholder="Email" />
-							<input type="email" placeholder="Contraseña" />
+						<form  action="{% url 'INICIAR_SESION' %}" method="POST">
+							{% csrf_token %}
+							<input name="txtEmailLogin" type="email" placeholder="Email" />
+							<input name="txtPassLogin" type="password" placeholder="Contraseña" />
 							<span>
 								<input type="checkbox" class="checkbox"> 
 								Mantenerme Registrado
@@ -26,10 +27,11 @@
 				<div class="col-sm-4">
 					<div class="signup-form"><!--sign up form-->
 						<h2>Nuevo Registro De Usuario =) </h2>
-						<form action="#">
-							<input type="text" placeholder="Nombre"/>
-							<input type="email" placeholder="Email"/>
-							<input type="password" placeholder="Contraseña"/>
+						<form action="{% url 'REGISTRARSE' %}" method="POST">
+							{% csrf_token %} <!--Token de Seguridad para el formulario-->
+							<input name="txtNombre" type="text" placeholder="Nombre"/>
+							<input name="txtEmail" type="email" placeholder="Email"/>
+							<input name="txtContraseña" type="password" placeholder="Contraseña"/>
 							<button type="submit" class="btn btn-default">Registrarse</button>
 						</form>
 					</div><!--/sign up form-->
