@@ -1,0 +1,376 @@
+-----------------------
+
+
+
+
+-- NOMBRE : Benjamín Silva
+-- PROFESOR : Freddy Campos
+
+
+
+----------------------
+
+
+-- 1.
+---------------------------------------
+
+
+-- TRIGGER 
+
+CREATE OR REPLACE TRIGGER trg_producto_interes 
+AFTER UPDATE ON producto 
+FOR EACH ROW
+BEGIN 
+    IF  :OLD.tasaint_producto < :NEW.tasaint_producto THEN 
+        UPDATE tipo_transaccion_tarjeta SET tasaint_tptran_tarjeta = nvl(tasaint_tptran_tarjeta,0) + 0.01 WHERE cod_producto = :OLD.cod_producto;
+    ELSIF :OLD.tasaint_producto >=  :NEW.tasaint_producto THEN 
+        UPDATE tipo_transaccion_tarjeta SET nro_maximo_cuotas_tran = nro_maximo_cuotas_tran - 12 WHERE cod_producto = :OLD.cod_producto;
+    END IF;
+END trg_producto_interes;
+
+---------------------------------------------
+
+--- Actualizar en la tabla producto
+
+BEGIN 
+    UPDATE producto SET tasaint_producto = 0.5 WHERE cod_producto = 4; -- Crédito Emergencia
+    UPDATE producto SET tasaint_producto = 0.1 WHERE cod_producto = 2; -- Crédito Consumo
+    UPDATE producto SET tasaint_producto = 0.05 WHERE cod_producto = 1; -- Crédito Premier
+END;
+
+
+ROLLBACK;
+
+
+
+
+------------------------------------------------------
+
+
+-- 2.
+
+-- FOTOS A CLIENTES
+
+-----------------------------------------------------------------------------
+
+
+-- Crear el directorio de las fotos de los clientes 
+
+CREATE OR REPLACE DIRECTORY fotos_clientes AS 'C:\Imagenes\fotos_clientes';
+
+-- Dar permisos desde el usuario Sys a nuestra conexión
+GRANT READ, WRITE ON DIRECTORY fotos_clientes TO etmdy_fa;
+
+
+-----------------------------------------------------------------------------
+
+
+
+
+
+-----------------------------------------------------------------------
+-- Crear proceso de actualización de fotos
+-----------------------------------------------------------------------
+
+
+
+
+-- Package que registra los errores en el proceso de fotos
+
+-----------------------------------------------------------------------------
+
+CREATE OR REPLACE PACKAGE pkg_subprogramas IS
+    v_rutina_error error_procesos_mensuales.rutina_error%TYPE;
+    v_descripcion_error error_procesos_mensuales.descrip_error%TYPE;
+    PROCEDURE sp_registro_errores (p_rutina_error IN error_procesos_mensuales.rutina_error%TYPE , p_descripcion_error IN error_procesos_mensuales.descrip_error%TYPE);
+END pkg_subprogramas;
+
+
+-----------------------------------------------------------------------------
+
+
+-----------------------------------------------------------------------------
+
+
+CREATE OR REPLACE PACKAGE BODY pkg_subprogramas IS
+    PROCEDURE sp_registro_errores (p_rutina_error IN error_procesos_mensuales.rutina_error%TYPE , p_descripcion_error IN error_procesos_mensuales.descrip_error%TYPE) IS 
+    BEGIN 
+        EXECUTE IMMEDIATE 'INSERT INTO error_procesos_mensuales VALUES (seq_error.NEXTVAL, :p_rutina_error, :p_descripcion_error)'
+        USING p_rutina_error, p_descripcion_error;
+    END sp_registro_errores;
+END pkg_subprogramas;
+
+
+
+-----------------------------------------------------------------------------
+
+-- Procedimiento almacenado que actualiza la foto de los Clientes
+
+-----------------------------------------------------------------------------
+
+CREATE OR REPLACE PROCEDURE sp_foto_cliente IS
+
+    -- Variables para almacenar y cargar las fotos
+    v_blob BLOB;
+    v_bfile BFILE;
+    -- Identificación de la foto
+    v_nombre VARCHAR2(100);
+    -- Directorio donde se encuentra
+    v_directorio VARCHAR2(80);
+    
+    -- Cursor que recorre las fotos de los Clientes
+    CURSOR cur_fotos IS 
+    SELECT numrun, foto FROM cliente 
+    FOR UPDATE OF foto;
+
+BEGIN 
+    -- Recorrer el cursor y almacenar las fotos
+    FOR X IN cur_fotos 
+    LOOP
+        BEGIN 
+        
+            --Directorio y nombre del archivo
+            v_directorio := 'FOTOS_CLIENTES';
+            v_nombre := X.numrun || '.JPG';
+            v_blob :=  X.foto;
+            
+            -- Proceso de actualización de fotos
+            v_bfile := bfilename(v_directorio, v_nombre);
+            
+            -- blob, bfile
+            dbms_lob.OPEN(v_bfile, dbms_lob.lob_readonly);
+            dbms_lob.loadfromfile(v_blob, v_bfile, dbms_lob.getlength(v_bfile));
+            dbms_lob.CLOSE(v_bfile);
+
+        EXCEPTION 
+            WHEN OTHERS THEN 
+                -- Nombre del subprograma del error
+                pkg_subprogramas.v_rutina_error := 'ERROR SP_FOTO_CLIENTE';
+                pkg_subprogramas.v_descripcion_error := 'No se encontró foto del cliente con el RUN ' || X.numrun;
+                pkg_subprogramas.sp_registro_errores(pkg_subprogramas.v_rutina_error, pkg_subprogramas.v_descripcion_error);    
+        END;
+    END LOOP;
+EXCEPTION 
+    WHEN OTHERS THEN 
+        pkg_subprogramas.v_descripcion_error := sqlerrm;
+        pkg_subprogramas.sp_registro_errores(pkg_subprogramas.v_rutina_error, pkg_subprogramas.v_descripcion_error);
+END sp_foto_cliente;
+
+
+-----------------------------------------------------------------------------
+
+-----------------------------------------------------------------------------
+EXEC sp_foto_cliente;
+
+-----------------------------------------------------------------------------
+
+
+-------------------------------------
+-- 3.
+
+
+
+-- Procedimiento almacenado que registra los errores del proceso
+
+-----------------------------------------------------------------------------
+
+CREATE OR REPLACE PROCEDURE sp_errores (p_rutina_error IN error_procesos_mensuales.rutina_error%TYPE , p_descripcion_error IN error_procesos_mensuales.descrip_error%TYPE) IS 
+BEGIN 
+    -- SQL DINÁMICO
+    EXECUTE IMMEDIATE 'INSERT INTO error_procesos_mensuales VALUES (SEQ_ERROR.nextval, :p_rutina_error, :p_descripcion_error)'
+    USING p_rutina_error, p_descripcion_error;
+END sp_errores;
+
+
+-----------------------------------------------------------------------------
+
+
+
+-----------------------------------------------------------------------------
+
+CREATE OR REPLACE PACKAGE pkg_retail_hipes IS
+    
+    -- 4 variables públicas
+    v_rutina_error error_procesos_mensuales.rutina_error%TYPE;
+    v_descripcion_error error_procesos_mensuales.descrip_error%TYPE;
+    v_edad NUMBER(2);
+    v_ptc_antiguedad NUMBER;
+    v_pct_cupo_compra NUMBER;
+    
+    -- 2 Funciones públicas 
+    FUNCTION fn_pct_aum_antiguedad (p_fecha_inscripcion IN DATE, p_fecha_proceso IN DATE) RETURN NUMBER;
+    FUNCTION fn_pct_aum_cupo_compra (p_edad IN NUMBER) RETURN NUMBER;
+    
+    -- 2 Procedimientos almacenados
+   PROCEDURE sp_cal_edad_cli (p_fecha_nac IN DATE, p_edad OUT NUMBER, p_fecha_proceso IN DATE) ;
+   PROCEDURE sp_trunca_tabla(p_nombre_tabla IN VARCHAR2);
+   
+END pkg_retail_hipes;
+
+
+-----------------------------------------------------------------------------
+
+
+
+-----------------------------------------------------------------------------
+
+-- BODY DEL PACKAGE
+
+-----------------------------------------------------------------------------
+
+CREATE OR REPLACE PACKAGE BODY pkg_retail_hipes IS
+   -- Functions
+    FUNCTION fn_pct_aum_cupo_compra  (p_edad IN NUMBER) RETURN NUMBER IS 
+        v_mensaje error_procesos_mensuales.descrip_error%TYPE;
+    BEGIN
+        v_pct_cupo_compra := p_edad /100 + 1;
+        RETURN v_pct_cupo_compra;
+    EXCEPTION 
+        WHEN OTHERS THEN
+            v_mensaje := sqlerrm;
+            sp_errores('PKG_RETAIL_HIPES.FN_PCT_AUM_CUPO_COMPRA',v_mensaje);
+            RETURN 0;
+    END fn_pct_aum_cupo_compra;
+    
+    FUNCTION fn_pct_aum_antiguedad (p_fecha_inscripcion IN DATE, p_fecha_proceso IN DATE) RETURN NUMBER IS
+        v_mensaje error_procesos_mensuales.descrip_error%TYPE;
+    BEGIN
+        v_ptc_antiguedad := TRUNC(months_between(p_fecha_proceso, p_fecha_inscripcion)/12);
+        v_ptc_antiguedad := v_ptc_antiguedad / 100 + 1;
+        RETURN v_ptc_antiguedad;
+    EXCEPTION 
+    WHEN OTHERS THEN
+        v_mensaje := sqlerrm;
+        sp_errores('PKG_RETAIL_HIPES.FN_PCT_AUM_ANTIGUEDAD',v_mensaje);
+        RETURN 0;
+    END fn_pct_aum_antiguedad;
+    
+    -- Procedures
+    
+    PROCEDURE sp_cal_edad_cli (p_fecha_nac IN DATE, p_edad OUT NUMBER, p_fecha_proceso IN DATE) IS 
+        v_mensaje error_procesos_mensuales.descrip_error%TYPE;
+    BEGIN
+        p_edad := TRUNC(months_between(p_fecha_proceso, p_fecha_nac)/12);
+        EXCEPTION 
+    WHEN OTHERS THEN
+        v_mensaje := sqlerrm;
+        sp_errores('PKG_RETAIL_HIPES.SP_CAL_EDAD_CLI',v_mensaje);
+    END sp_cal_edad_cli;
+    
+    
+    PROCEDURE sp_trunca_tabla(p_nombre_tabla IN VARCHAR2) IS 
+        v_rutina_error VARCHAR2(300);
+        v_descripcion_error VARCHAR2(300);
+    BEGIN 
+        EXECUTE IMMEDIATE 'TRUNCATE TABLE ' || p_nombre_tabla;
+    EXCEPTION 
+        WHEN OTHERS THEN 
+            v_rutina_error := 'ERROR PKG_RETAIL_HIPES.SP_TRUNCA_TABLA';
+            v_descripcion_error := sqlerrm;
+            sp_errores(v_rutina_error,v_descripcion_error);
+    END sp_trunca_tabla;
+    
+END pkg_retail_hipes;
+
+
+-----------------------------------------------------------------------------
+
+
+
+-----------------------------------------------------------------------------
+
+-- Procedimiento almacenado principal
+
+-----------------------------------------------------------------------------
+
+CREATE OR REPLACE PROCEDURE sp_aumentos_mes_cliente (p_fecha_proceso IN DATE, p_mes OUT NUMBER) IS
+    -- CURSOR CON PARAMETROS
+    CURSOR cur_resumen (p_fecha_proceso IN DATE ) IS 
+    SELECT C.numrun, C.dvrun, C.fecha_nacimiento, C.fecha_inscripcion, T.cupo_compra, T.cupo_super_avance --, O.nombre_prof_ofic
+    FROM cliente C
+    INNER JOIN tarjeta_cliente T
+    ON C.numrun = T.numrun
+    INNER JOIN ocupacion o
+    ON o.cod_ocupacion = C.cod_ocupacion
+    WHERE to_char (C.fecha_nacimiento, 'MM') = to_char(p_fecha_proceso, 'MM') - 1 
+    OR UPPER(o.nombre_prof_ofic) LIKE '%INGENIERO%'
+    OR UPPER(o.nombre_prof_ofic) LIKE '%TÉCNICO%'
+    ORDER BY numrun ASC;
+    v_inscripcion DATE;
+    reg_resumen cur_resumen%rowtype;
+    reg_aumento aumentos_mes_cliente%rowtype;
+BEGIN 
+    p_mes :=  to_char(p_fecha_proceso, 'MM') - 1 ;
+    -- Truncar tabla 
+    pkg_retail_hipes.sp_trunca_tabla('AUMENTOS_MES_CLIENTE');
+    -- Actualización de fotos
+    sp_foto_cliente;
+    OPEN cur_resumen (p_fecha_proceso);
+    LOOP
+        BEGIN
+            FETCH cur_resumen INTO reg_resumen;
+            
+            EXIT WHEN cur_resumen%notfound;
+            -- Cálculos
+            v_inscripcion := reg_resumen.fecha_inscripcion;
+            pkg_retail_hipes.sp_cal_edad_cli (reg_resumen.fecha_nacimiento, pkg_retail_hipes.v_edad, p_fecha_proceso);
+            pkg_retail_hipes.v_pct_cupo_compra := pkg_retail_hipes.fn_pct_aum_cupo_compra(pkg_retail_hipes.v_edad);
+            pkg_retail_hipes.v_ptc_antiguedad := pkg_retail_hipes.fn_pct_aum_antiguedad(v_inscripcion, p_fecha_proceso);
+            pkg_retail_hipes.v_pct_cupo_compra := round(pkg_retail_hipes.v_pct_cupo_compra * reg_resumen.cupo_compra);
+            pkg_retail_hipes.v_ptc_antiguedad := round(pkg_retail_hipes.v_ptc_antiguedad * reg_resumen.cupo_super_avance);
+            
+            reg_aumento.fecha_proceso := p_fecha_proceso;
+            reg_aumento.numrun := reg_resumen.numrun;
+            reg_aumento.dvrun:= reg_resumen.dvrun;
+            reg_aumento.fecha_nacimiento := reg_resumen.fecha_nacimiento;
+            reg_aumento.cupo_compras := reg_resumen.cupo_compra;
+            reg_aumento.cupo_super_avance := reg_resumen.cupo_super_avance;
+            
+            -- Insertar en la tabla
+            INSERT INTO aumentos_mes_cliente VALUES reg_aumento;
+        EXCEPTION 
+            WHEN OTHERS THEN 
+                pkg_retail_hipes.v_rutina_error := 'SP_AUMENTOS_MES_CLIENTE';
+                pkg_retail_hipes.v_descripcion_error := sqlerrm;
+                sp_errores(pkg_retail_hipes.v_rutina_error, pkg_retail_hipes.v_descripcion_error);
+        END;
+    END LOOP;
+    CLOSE cur_resumen;
+END sp_aumentos_mes_cliente;
+
+
+-----------------------------------------------------------------------------
+
+
+-----------------------------------------------------------------------------
+
+-- Bloque anónimo para ejecutar el proceso
+
+-----------------------------------------------------------------------------
+
+
+
+
+---------------------------------------------------------------------------------------------
+
+-- Ingresamos la fecha del proceso
+
+-- Simulamos el día 5/10/2020
+
+----------------------------------------------------------------------------------------------
+
+SET SERVEROUTPUT ON;
+
+DECLARE 
+    v_mes NUMBER;
+BEGIN
+    sp_aumentos_mes_cliente('05/10/2020',v_mes);
+    dbms_output.put_line('Cantidad de Clientes Procesados MES : ' || v_mes);
+END;
+
+ROLLBACK;
+
+
+SELECT * FROM cliente WHERE numrun = 21300629;
+
+-----------------------------------------------------------------------------
