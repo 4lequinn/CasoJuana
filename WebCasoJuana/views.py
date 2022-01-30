@@ -8,6 +8,8 @@ from django.contrib.auth import authenticate,logout,login
 # importar libreria de decoradores que permite evitar el ingreso a páginas  restringidas
 from django.contrib.auth.decorators import login_required, permission_required #Decoradores para restringuir acceso a las páginas
 
+# Importamos los modelos 
+from .models import *
 
 # Create your views here.
 
@@ -58,10 +60,8 @@ def iniciarSesion(request):
         if us is not None and  us.is_active:
             #Cargamos al usuario en todas las páginas
             login(request,us)
-            print('YEEEEESS!')
             return render(request,"core/index.html")
         else:
-            print('INVALIDO')
             contexto = {"mensaje":"Correo electrónico o contraseña no válidos"}
             return render(request,'core/login.html',contexto)
     return render(request,'core/login.html')
@@ -82,3 +82,40 @@ def cart(request):
 
 def repara(request):
     return render(request, 'core/repara.html');
+
+def verConsultas(request):
+    mensaje = "Sin solicitudes."
+    try:
+        listaConsultas = Reparacion.objects.filter(esAceptada = False)
+        datos = {"consultas":listaConsultas}
+        return render(request,'core/ver-solicitudes.html',datos)
+    except:
+        datos = {"mensaje":mensaje}
+        return render(request,'core/ver-solicitudes.html',datos)
+
+def enviarConsulta(request):
+    mensaje = "No enviado."
+    if request.POST:
+        # Recibimos los datos de la pagina
+        nombres = request.POST.get("txtNombre")
+        apellidos = request.POST.get("txtApellido")
+        correo = request.POST.get("txtEmail")
+        marcaModelo = request.POST.get("txtMarca")
+        comentario = request.POST.get("txtComentario")
+        #esAceptada = request.POST.get("txtNombre")
+
+        consulta = Reparacion(
+            nombres = nombres,
+            apellidos = apellidos,
+            correo = correo,
+            marca_modelo = marcaModelo,
+            comentario = comentario,
+            esAceptada = False
+        )
+
+        consulta.save()
+        mensaje = "¡Enviado con éxito!"
+
+    datos = {"mensaje":mensaje}
+
+    return render(request, 'core/repara.html',datos)

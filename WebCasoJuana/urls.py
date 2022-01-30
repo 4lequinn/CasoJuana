@@ -12,4 +12,6 @@ urlpatterns = [
     path('carrito/',cart,name='CART'),
     path('arrienda/',arrienda,name='ARRIENDA'),
     path('repara/',repara,name='REPARA'),
+    path('enviar-solicitud/',enviarConsulta,name='CONSULTA'),
+    path('ver-solicitudes/',verConsultas, name='VER_CONSULTAS'),
 ]

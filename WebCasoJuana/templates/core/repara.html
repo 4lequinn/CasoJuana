@@ -3,68 +3,62 @@
 
 {% block contenido %}
 
-	<section id="cart_items">
-		<div class="container">
-			<div class="breadcrumbs">
-				<ol class="breadcrumb">
-				  <li><a href="#">Home</a></li>
-				  <li class="active">Repara o consulta estado</li>
-				</ol>
-			</div><!--/breadcrums-->
+<section id="cart_items">
+	<div class="container">
+		<div class="breadcrumbs">
+			<ol class="breadcrumb">
+				<li><a href="#">Home</a></li>
+				<li class="active">Repara o consulta estado</li>
+			</ol>
+		</div>
+		<!--/breadcrums-->
 
-			<div class="step-one">
-				<h2 class="heading">Bienvenido</h2>
-			</div>
-			<div class="checkout-options">
-				<h3>Usuario x</h3>
-				<p></p>
-				
-			</div><!--/checkout-options-->
+		<div class="step-one">
+			<h2 class="heading">Bienvenido</h2>
+		</div>
+		<div class="checkout-options">
+			<h3>¡Hola <span style="font-weight: 900;">{{ user.first_name }}</span>, escríbanos su consulta!</h3>
+			<p></p>
 
-			<div class="register-req">
-				<p>En los siguientes bloques debe ingresar la informacion necesaria para solicitar una reparacion de su bicicleta</p>
-			</div><!--/register-req-->
+		</div>
+		<!--/checkout-options-->
 
-			<div class="shopper-informations">
-				<div class="row">
-					<div class="col-sm-3">
-						<div class="shopper-info">
-							<p>Informacion de contacto</p>
-							<form>
-								<input type="text" placeholder="Nombres">
-								<input type="text" placeholder="Apellidos">
-								<input type="password" placeholder="Correo Electronico">
-								<input type="password" placeholder="Numero de telefono">
-							</form>
+		<div class="register-req">
+			<p>En los siguientes bloques debe ingresar la informacion necesaria para solicitar una reparacion de su
+				bicicleta</p>
+		</div>
+
+
+		<!--/register-req-->
+		<div class="shopper-informations">
+			<div class="row">
+				<div class="col-sm-3">
+					<div class="shopper-info">
+						<p>Informacion de contacto</p>
+						<form action="{% url 'CONSULTA' %}" method="POST">
+							{% csrf_token %}
 							
-							<a class="btn btn-primary" href="">Enviar solicitud de reparacion</a>
-						</div>
-					</div>
-					<div class="col-sm-5 clearfix">
-						<div class="bill-to">
-							<p>Bicicleta</p>
-							<div class="form-one">
-								<form>
-									<input type="text" placeholder="Marca">
-									<input type="text" placeholder="Modelo">
-									<input type="text" placeholder="Talla">
-									<input type="text" placeholder="Color">
-									<input type="text" placeholder="Aro">
-									<input type="text" placeholder="Clasificacion">
-									<input type="text" placeholder="Año">
-									
-								</form>
-							</div>
+							<input name="txtNombre" type="text" placeholder="Nombres">
+							<input name="txtApellido" type="text" placeholder="Apellidos">
+							<input name="txtEmail" type="Email" placeholder="Correo Electronico">
+							<input name="txtMarca" type="text" placeholder="Modelo y Marca">
+							<input name="txtComentario" type="text" placeholder="Problema a reparar">
+
+							<!-- BTN ENVIAR FORM -->
+							<input type="submit" class="btn btn-primary" value="Enviar solicitud de reparación">
+							<p style="color: red;">{{mensaje}}</p>
 							
-						</div>
+						</form>
 					</div>
-					<div class="col-sm-4">
-						<div class="order-message">
-							<p>Describa Situacion De Bicicleta</p>
-							<textarea name="message"  placeholder="Fallas, Errores, entre otros...." rows="16"></textarea>
-							<label><input type="checkbox"> Confirmar datos ingresados</label>
-						</div>	
-					</div>					
 				</div>
 
-{% endblock %}
+				<div class="col-sm-4">
+					<div class="order-message">
+						<p>Reseña</p>
+						<textarea name="txtReseña" placeholder="Fallas, Errores, entre otros...."
+							rows="16"></textarea>
+					</div>
+				</div>
+			</div>
+
+			{% endblock %}
