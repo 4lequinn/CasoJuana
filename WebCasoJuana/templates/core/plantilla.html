@@ -111,16 +111,28 @@
                         <div class="shop-menu clearfix pull-right">
                             <ul class="nav navbar-nav">
                                 {% if user.is_authenticated %}
-                                    <li><a href=""><i class="fa fa-user"></i> Cuenta de {{user.first_name}}</a></li>
-                                    <li><a href={% url 'CART' %}><i class="fa fa-shopping-cart"></i> Carrito De compras</a></li>
+                                <li><a href=""><i class="fa fa-user"></i> Cuenta de {{user.first_name}}</a></li>
+                                <li><a href={% url 'CART' %}><i class="fa fa-shopping-cart"></i> Carrito De compras</a>
+                                </li>
+
+                                {% if perms.WebCasoJuana.view_reparacion and perms.WebCasoJuana.change_reparacion %}
+                                <!-- Permisos de técnico -->
+                                <li><a href={% url 'VER_CONSULTAS' %}><i class="fa fa-eye"></i>Ver Consultas</a></li>
+                                {% endif %}
+
+                                {% if perms.WebCasoJuana.view_venta %}
+                                <!-- Permisos de vendedor -->
+                                <li><a href={% url 'VER_INVENTARIO' %}><i class="fa fa-money"></i>Ver Ventas</a></li>
+                                {% endif %}
+
                                 {% endif %}
 
                                 {% if user.is_authenticated %}
-                                    <li><a href={% url 'LOGOUT' %}><i class="fa fa-lock"></i>Cerrar sesión</a></li>
+                                <li><a href={% url 'LOGOUT' %}><i class="fa fa-lock"></i>Cerrar sesión</a></li>
                                 {% else %}
-                                    <li><a href={% url 'LOGIN' %}><i class="fa fa-lock"></i> Login</a></li>
+                                <li><a href={% url 'LOGIN' %}><i class="fa fa-lock"></i> Login</a></li>
                                 {% endif %}
-                                
+
                             </ul>
                         </div>
                     </div>
@@ -150,7 +162,7 @@
                                 {% if user.is_authenticated %}
                                 <li class="dropdown"><a href="#">Compras<i class="fa fa-angle-down"></i></a>
                                     <ul role="menu" class="sub-menu">
-                                        <li><a href="shop.html">Productos</a></li>
+                                        <li><a href="#">Productos</a></li>
 
 
                                     </ul>
@@ -165,7 +177,7 @@
                                 <li class="dropdown"><a href="#">Arrienda<i class="fa fa-angle-down"></i></a>
                                     <ul role="menu" class="sub-menu">
                                         <li><a href={% url 'ARRIENDA' %}>Bicicletas</a></li>
-                                {% endif %}
+                                        {% endif %}
                         </div>
                     </div>
                     <div class="col-sm-3">
@@ -335,8 +347,8 @@
             <div class="container">
                 <div class="row">
                     <p class="pull-left">Copyright © 2022 MasTurbaBikes Inc. All rights reserved.</p>
-                    <p class="pull-right">El cambio empieza por uno <span><a target="_blank" 
-                    href="https://www.fundacionadopta.cl/Index/">Tu proximo angel</a></span></p>
+                    <p class="pull-right">El cambio empieza por uno <span><a target="_blank"
+                                href="https://www.fundacionadopta.cl/Index/">Tu proximo angel</a></span></p>
                 </div>
             </div>
         </div>

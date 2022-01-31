@@ -18,3 +18,9 @@ class Reparacion(models.Model):
     def __str__(self):
         return str(self.correo)
 
+
+class Venta(models.Model):
+    ventaID = models.AutoField(primary_key = True)
+
+    def __str__(self):
+        return str(self.ventaID)

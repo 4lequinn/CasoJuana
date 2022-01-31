@@ -1,6 +1,9 @@
 {% extends 'core/plantilla.html' %}
 {% load static %}
 
+{% block titulo %}
+<title>Solicitudes</title>
+{% endblock %}
 
 {% block css %}
 <link rel="stylesheet" href={% static "css/solicitud.css" %}>
@@ -37,14 +40,16 @@
                     <td>{{x.comentario}}</td>
                     <td>
                         <span class="action_btn ">
-                            <a href="../ControladorEquipo?id=${x.id}" class="btn btn-primary material-icons "
-                                data-toggle="tooltip" data-placement="top" title="Editar">check</a>
+                            <a href={% url 'ACEPTAR_SERVICIO' x.reparacionID %} class="btn btn-primary material-icons "
+                                data-toggle="tooltip" data-placement="top" title="ACEPTAR">check</a>
 
                         </span>
                     </td>
             </tbody>
         {% endfor %}
     </table>
+
+    <div style="color: red; font-weight: 900;">{{mensaje}}</div>
 </div>
 
 {% endblock %}

@@ -1,6 +1,10 @@
 {% extends 'core/plantilla.html' %}
 {% load static %}
 
+{% block titulo %}
+<title>Servicio Reparación</title>
+{% endblock %}
+
 {% block contenido %}
 
 <section id="cart_items">
@@ -38,9 +42,9 @@
 						<form action="{% url 'CONSULTA' %}" method="POST">
 							{% csrf_token %}
 							
-							<input name="txtNombre" type="text" placeholder="Nombres">
-							<input name="txtApellido" type="text" placeholder="Apellidos">
-							<input name="txtEmail" type="Email" placeholder="Correo Electronico">
+							<input name="txtNombre" type="text" placeholder="Nombres" value="{{user.first_name}}">
+							<input name="txtApellido" type="text" placeholder="Apellidos" value="{{user.last_name}}">
+							<input name="txtEmail" type="Email" placeholder="Correo Electronico" value="{{user.email}}">
 							<input name="txtMarca" type="text" placeholder="Modelo y Marca">
 							<input name="txtComentario" type="text" placeholder="Problema a reparar">
 

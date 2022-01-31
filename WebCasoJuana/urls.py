@@ -14,4 +14,6 @@ urlpatterns = [
     path('repara/',repara,name='REPARA'),
     path('enviar-solicitud/',enviarConsulta,name='CONSULTA'),
     path('ver-solicitudes/',verConsultas, name='VER_CONSULTAS'),
+    path('aceptar-solicitud/<id>/',aceptarConsulta,name="ACEPTAR_SERVICIO"),
+    path('ver-inventario/',verInventario,name="VER_INVENTARIO"),
 ]

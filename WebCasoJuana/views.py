@@ -73,16 +73,20 @@ def cerrarSesion(request):
     logout(request)
     return render(request,'core/index.html')
 
-
+@login_required(login_url='/login/')
 def arrienda(request):
     return render(request, 'core/arrienda.html');
 
+@login_required(login_url='/login/')
 def cart(request):
     return render(request, 'core/cart.html');
 
+@login_required(login_url='/login/')
 def repara(request):
     return render(request, 'core/repara.html');
 
+@login_required(login_url='/login/')
+@permission_required('WebCasoJuana.view_reparacion',login_url='/login/')
 def verConsultas(request):
     mensaje = "Sin solicitudes."
     try:
@@ -93,6 +97,7 @@ def verConsultas(request):
         datos = {"mensaje":mensaje}
         return render(request,'core/ver-solicitudes.html',datos)
 
+@login_required(login_url='/login/')
 def enviarConsulta(request):
     mensaje = "No enviado."
     if request.POST:
@@ -119,3 +124,21 @@ def enviarConsulta(request):
     datos = {"mensaje":mensaje}
 
     return render(request, 'core/repara.html',datos)
+
+@login_required(login_url='/login/')
+@permission_required('WebCasoJuana.view_reparacion',login_url='/login/')
+@permission_required('WebCasoJuana.change_reparacion',login_url='/login/')
+def aceptarConsulta(request,id):
+    listaConsultas = Reparacion.objects.all()
+    # Obtengo la consulta seleccionada
+    consulta = Reparacion.objects.get(reparacionID = id)
+    consulta.esAceptada = True
+    consulta.save()
+    return redirect(to='VER_CONSULTAS')
+
+@login_required(login_url='/login/')
+@permission_required('WebCasoJuana.view_venta',login_url='/login/')
+@permission_required('WebCasoJuana.change_venta',login_url='/login/')
+def verInventario(request):
+    return render(request, 'core/ver-inventario.html')
+
